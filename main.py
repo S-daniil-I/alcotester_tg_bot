@@ -1,20 +1,22 @@
 import threading
-import socket
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from aiogram import executor
 from handlers import start, Gender_chooosing, Gender_height, Gender_weight, choose_drink, value_alc, stomach, long_time, spend_time, data
 from create_bot import dp
 from sqlite import db_start
 
 
-def dummy_server():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("", 8000))  # Render видит открытый порт
-        s.listen()
-        while True:
-            conn, addr = s.accept()
-            conn.close()
+class DummyHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"OK")
 
-threading.Thread(target=dummy_server, daemon=True).start()
+def run_server():
+    server = HTTPServer(('0.0.0.0', 8000), DummyHandler)
+    server.serve_forever()
+
+threading.Thread(target=run_server, daemon=True).start()
 
 
 async def on_startup(_):
@@ -32,5 +34,6 @@ long_time.long_time(dp)
 spend_time.spend_time(dp)
 data.data(dp)
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     executor.start_polling(dispatcher=dp, skip_updates=True, on_startup=on_startup)
